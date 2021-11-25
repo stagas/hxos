@@ -1,4 +1,4 @@
-<h1 align="center">ΗΧΟΣ<br>〜<br><small>/ɛ̂ː.kʰos/ → /ˈi.xos/ → /ˈi.xos/</small></h1>
+<h1 align="center">ΗΧΟΣ<br>〜<br><small>/ɛ̂ː.kʰos/</small></h1>
 
 <p align="center">
 c-style dsl and runtime for audio dsp
