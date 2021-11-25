@@ -1,4 +1,5 @@
 import compile from '../../../vendor/wel'
+import { annotate } from 'annotate-code'
 import { build, S } from '..'
 import { parse } from '../../parser'
 
@@ -11,7 +12,23 @@ const make = async (input: string) => {
   const tree = parse(input)
   const wat = build(tree)
   const source = S(['func', ['export', '"main"'], ['result', 'f32'], wat])
-  const buffer = compile(source)
+  let buffer
+  try {
+    buffer = compile(source)
+  } catch (e) {
+    const error = e as Error
+    const index =
+      error.message?.split('position: ')?.[1]?.split(' ')?.[0] ?? source.length
+    throw new SyntaxError(
+      error.message +
+        '\n' +
+        annotate({
+          message: error.message.split('\n')[0],
+          index: +index,
+          code: source,
+        }).message
+    )
+  }
   const mod = (await wasm(buffer)) as { main(): number }
   return mod
 }
