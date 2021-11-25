@@ -2,6 +2,7 @@
   "extends": "./tsconfig.json",
   "exclude": [
     "benchmark",
+    "playground",
     "example",
     "**/*.spec.ts",
     "**/*.spec.tsx"

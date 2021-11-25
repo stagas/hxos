@@ -1,4 +1,5 @@
 module.exports = {
+  root: true,
   env: {
     browser: true,
     es2021: true,
@@ -9,18 +10,10 @@ module.exports = {
     sourceType: 'module',
   },
   extends: [
-    'plugin:@typescript-eslint/recommended',
-    'plugin:react/recommended',
+    'plugin:@typescript-eslint/recommended'
   ],
   ignorePatterns: ['dist', 'node_modules'],
   plugins: ['import'],
-  settings: {
-    react: {
-      pragma: 'h',
-      fragment: 'Fragment',
-      version: '17',
-    },
-  },
   rules: {
     '@typescript-eslint/no-extra-semi': 'off',
     '@typescript-eslint/no-non-null-assertion': 'off',
