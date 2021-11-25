@@ -19,6 +19,9 @@ describe('parse', () => {
   it('parses correctly', () => {
     let s
 
+    s = parse('')
+    expect(to_string(s)).toEqual('')
+
     s = parse('1')
     expect(to_string(s)).toEqual('1')
 
@@ -75,15 +78,13 @@ describe('parse', () => {
     expect(to_string(s)).toEqual('(= a (= (? 0 c b) d))')
   })
 
-  // it('throws on errors', () => {
-  //   expect(() => parse('%')).toThrow('bad op')
-  //   expect(() => parse('1+%')).toThrow('bad op')
-  //   expect(() => parse("1'")).toThrow('bad token')
-  //   expect(() => parse("'")).toThrow('bad token')
-  //   expect(() => parse('(')).toThrow('bad token')
-  //   expect(() => parse('(1')).toThrow('bad token')
-  //   expect(() => parse('a[')).toThrow('bad token')
-  //   expect(() => parse('a[1')).toThrow('bad token')
-  //   expect(() => parse('')).toThrow('bad token')
-  // })
+  it('throws on errors', () => {
+    expect(() => parse('%')).toThrow('bad op')
+    expect(() => parse('1+%')).toThrow('bad op')
+    expect(() => parse("'")).toThrow('bad prefix token')
+    expect(() => parse('(')).toThrow('eof')
+    expect(() => parse('(1')).toThrow('eof')
+    expect(() => parse('a[')).toThrow('eof')
+    expect(() => parse('a[1')).toThrow('eof')
+  })
 })

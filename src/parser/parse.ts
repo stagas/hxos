@@ -1,14 +1,11 @@
-import {
-  createLexer,
-  LexerToken,
-  LexerTokenReturn,
-  UnexpectedTokenError,
-} from 'lexer-next'
+import type { LexerToken } from 'lexer-next'
+import { createLexer, UnexpectedTokenError } from 'lexer-next'
 import { joinRegExp } from 'join-regexp'
 import { annotate } from 'annotate-code'
 
 import { Op } from './op'
 
+export { LexerToken }
 export type ParserNode = LexerToken | LexerToken[]
 
 const regexp = joinRegExp(
@@ -26,17 +23,19 @@ const tokenizer = (input: string) => input.matchAll(regexp)
 
 const lexer = createLexer(tokenizer)
 
-export const panic = (message: string, token: LexerTokenReturn) =>
+export const panic = (message: string, token: LexerToken) =>
+  (message += ` '${token.value}' [${token.group}]`) +
+  '\n' +
   annotate({
-    message: message + ` "${token?.value}" [${token?.group}]`,
-    index: token?.index ?? 0,
-    code: token?.source.input ?? '<source missing>',
+    message,
+    index: token.index,
+    code: token?.source?.input ?? '<source missing>',
   }).message
 
 export const parse = (input: string) => {
   const { onerror, filter, peek, advance, expect } = lexer(input)
 
-  filter((token: LexerTokenReturn) => token?.group !== 'nul')
+  filter((token: LexerToken) => token.group !== 'nul')
 
   onerror((error: Error) => {
     /* istanbul ignore next */
@@ -65,14 +64,18 @@ export const parse = (input: string) => {
     let mhs
     let rhs
 
-    switch (token?.group) {
+    switch (token.group) {
+      case 'eof':
+        return token
       case 'ids':
       case 'num':
         lhs = token
         break
       case 'ops':
-        if (token!.value === '(') {
+        debugger
+        if (token.value === '(') {
           lhs = expr_bp(0)
+          console.log('here!')
           expect('ops', ')')
           break
         }
@@ -91,11 +94,13 @@ export const parse = (input: string) => {
 
       let op
       switch (token?.group) {
-        case undefined:
+        case 'eof':
           break loop
+
         case 'ops':
           op = token
           break
+
         default:
           throw new SyntaxError(panic('bad suffix token', token))
       }
@@ -140,20 +145,20 @@ export const parse = (input: string) => {
     return lhs as ParserNode
   }
 
-  const prefix_binding_power = (token: LexerTokenReturn) => {
-    const op = token!.value
+  const prefix_binding_power = (token: LexerToken) => {
+    const op = token.value
     if (!(op in Op.Prefix)) throw new SyntaxError(panic('bad op', token))
     return Op.Prefix[op].Unary || []
   }
 
-  const suffix_binding_power = (token: LexerTokenReturn) => {
-    const op = token!.value
+  const suffix_binding_power = (token: LexerToken) => {
+    const op = token.value
     if (!(op in Op.Suffix)) return []
     return Op.Suffix[op].Binary || Op.Suffix[op].Unary || []
   }
 
-  const infix_binding_power = (token: LexerTokenReturn) => {
-    const op = token!.value
+  const infix_binding_power = (token: LexerToken) => {
+    const op = token.value
     if (!(op in Op.Infix)) return []
     return Op.Infix[op].Binary || []
   }
