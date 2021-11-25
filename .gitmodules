@@ -1,0 +1,3 @@
+[submodule "vendor/wel"]
+	path = vendor/wel
+	url = git@github.com:stagas/wel
