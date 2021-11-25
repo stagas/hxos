@@ -51,12 +51,9 @@ export const build = (node: ParserNode): SExpr => {
           case '+':
             return build(lhs)
           case '-':
-            return ['f32.mul', ['f32.const', '-1'], build(lhs)]
+            return f32.negate_arithmetic(build(lhs))
           case '!':
-            return [
-              'f32.convert_i32_u',
-              ['i32.eqz', ['i32.trunc_f32_s', build(lhs)]],
-            ]
+            return f32.logical_not(build(lhs))
         }
       default:
         throw new SyntaxError(panic('unary op not implemented', symbol))
