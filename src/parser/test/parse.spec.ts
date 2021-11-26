@@ -16,11 +16,11 @@ function to_string(node: ParserNode | LexerToken): string {
     }
   }
 
-  return node.value
+  return node?.value ?? '()'
 }
 
 describe('parse', () => {
-  it('parses correctly', () => {
+  it('basic expressions', () => {
     let s
 
     s = parse('')
@@ -90,5 +90,25 @@ describe('parse', () => {
     expect(() => parse('(1')).toThrow('eof')
     expect(() => parse('a[')).toThrow('eof')
     expect(() => parse('a[1')).toThrow('eof')
+  })
+
+  it('function declaration', () => {
+    let s
+
+    s = parse('f(a,b):1')
+    expect(to_string(s)).toEqual('(: f (a b) 1)')
+
+    expect(() => parse('f(a,b):')).toThrow('expected expression')
+
+    s = parse('f(a,b):+1')
+    expect(to_string(s)).toEqual('(: f (a b) (+ 1))')
+
+    expect(() => parse('f(a,b):/1')).toThrow()
+
+    s = parse('f():1')
+    expect(to_string(s)).toEqual('(: f () 1)')
+
+    s = parse('f():1+2')
+    expect(to_string(s)).toEqual('(: f () (+ 1 2))')
   })
 })

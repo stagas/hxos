@@ -33,14 +33,19 @@ export const panic = (message: string, token: LexerToken) =>
   }).message
 
 export const parse = (input: string) => {
-  const { onerror, filter, peek, advance, expect } = lexer(input)
+  const { onerror, filter, peek, advance, expect, accept } = lexer(input)
 
   filter((token: LexerToken) => token.group !== 'nul')
 
   onerror((error: Error) => {
     /* istanbul ignore next */
     if (error instanceof UnexpectedTokenError) {
-      throw new SyntaxError(panic(`bad token - expected: [${error.expectedGroup}]`, error.currentToken))
+      throw new SyntaxError(
+        panic(
+          `bad token - expected: '${error.expectedValue}' [${error.expectedGroup}] but found instead:`,
+          error.currentToken
+        )
+      )
     } else {
       /* istanbul ignore next */
       throw error
@@ -63,6 +68,23 @@ export const parse = (input: string) => {
       case 'eof':
         return [token]
       case 'ids':
+        if (accept('ops', '(')) {
+          const fn = token
+          const args = []
+          let arg
+          while ((arg = accept('ids')) && args.push(arg) && peek().value !== ')') {
+            expect('ops', ',')
+          }
+          expect('ops', ')')
+          const op = expect('ops', ':')
+          const body = expr_bp(0)
+          if (body[0].group === 'eof') {
+            throw new SyntaxError(panic('expected expression, not end of input', op))
+          }
+          lhs = [op, fn, args, body]
+          break
+        }
+      // eslint-disable-next-line no-fallthrough
       case 'num':
         lhs = token
         break
