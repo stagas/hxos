@@ -140,10 +140,9 @@ export const analyse = (
             '+': Op['arithmetic']['plus'],
             '-': Op['arithmetic']['minus'],
           }[symbol.value] as OpKind
-
-          if (!kind) {
-            throw new SyntaxError(panic('unary op not implemented', symbol))
-          }
+      }
+      if (!kind) {
+        throw new SyntaxError(panic('unary op not implemented', symbol))
       }
     } else if (m != null) {
       // ternary
@@ -158,9 +157,11 @@ export const analyse = (
               type = ma.type
               children = [la, ma, ra]
               kind = Op['branch']['ifelse']
+              break
           }
-        default:
-          throw new SyntaxError(panic('ternary op not implemented', symbol))
+      }
+      if (!kind) {
+        throw new SyntaxError(panic('ternary op not implemented', symbol))
       }
     } else {
       // binary
@@ -184,10 +185,10 @@ export const analyse = (
             '*': Op['arithmetic']['mul'],
             '/': Op['arithmetic']['div'],
           }[symbol.value] as OpKind
-
-          if (!kind) {
-            throw new SyntaxError(panic('binary op not implemented', symbol))
-          }
+          break
+      }
+      if (!kind) {
+        throw new SyntaxError(panic('binary op not implemented', symbol))
       }
     }
   }

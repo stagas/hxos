@@ -17,10 +17,9 @@ const methods: GenMethods = {
   [Op.module.noop]: () => [],
 
   // type
-  [Op.type.convert]: a => {
-    const b = a.children[0]
+  [Op.type.convert]: ({ type, children: [b] }) => {
     let op
-    switch (a.type) {
+    switch (type) {
       case Type['f32']:
         switch (b.type) {
           case Type['i32']:
@@ -40,7 +39,7 @@ const methods: GenMethods = {
         }
     }
     if (!op) {
-      throw new TypeError(panic(`cannot convert ${b.type} to ${a.type}`, b.node[0]))
+      throw new TypeError(panic(`cannot convert ${b.type} to ${type}`, b.node[0]))
     }
     return [op, g(b)]
   },
@@ -60,8 +59,14 @@ const methods: GenMethods = {
   [Op.literal.const]: a => [`${a.type}.const`, value(a)],
 
   // branch
-  [Op.branch.ifelse]: () => [],
+  [Op.branch.ifelse]: ({ type, children: [cond, ifBody, elseBody] }) => [
+    'if',
+    ['result', type.toString()],
+    g(cond),
+    ['then', g(ifBody)],
+    elseBody ? ['else', g(elseBody)] : null,
+  ],
 
-  // branch
+  // validation
   [Op.validation_error.type_mismatch]: () => [],
 }
