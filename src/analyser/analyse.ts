@@ -2,31 +2,31 @@ import { ParserNode, panic, LexerToken } from '../parser'
 
 export namespace Op {
   export enum module {
-    compile = 'compile',
-    noop = 'noop',
+    compile = 'module.compile',
+    noop = 'module.noop',
   }
   export enum type {
-    convert = 'convert',
+    convert = 'type.convert',
   }
   export enum arithmetic {
-    plus = 'plus',
-    minus = 'minus',
-    add = 'add',
-    sub = 'sub',
-    mul = 'mul',
-    div = 'div',
+    plus = 'arithumetic.plus',
+    minus = 'arithumetic.minus',
+    add = 'arithumetic.add',
+    sub = 'arithumetic.sub',
+    mul = 'arithumetic.mul',
+    div = 'arithumetic.div',
   }
   export enum logical {
-    not = 'not',
+    not = 'logical.not',
   }
   export enum literal {
-    const = 'const',
+    const = 'literal.const',
   }
   export enum branch {
-    ifelse = 'ifelse',
+    ifelse = 'branch.ifelse',
   }
   export enum validation_error {
-    type_mismatch = 'type_mismatch',
+    type_mismatch = 'validation_error.type_mismatch',
   }
 }
 
