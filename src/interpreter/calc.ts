@@ -34,6 +34,7 @@ export const calc = (node: ParserNode | LexerToken | number, context: Record<str
           case '!':
             return +!lhs
         }
+      // eslint-disable-next-line no-fallthrough
       default:
         throw new SyntaxError(panic('symbol not implemented', symbol))
     }
@@ -48,6 +49,7 @@ export const calc = (node: ParserNode | LexerToken | number, context: Record<str
           case '?':
             return lhs ? mhs : rhs
         }
+      // eslint-disable-next-line no-fallthrough
       default:
         throw new SyntaxError(panic('symbol not implemented', symbol))
     }
@@ -67,6 +69,7 @@ export const calc = (node: ParserNode | LexerToken | number, context: Record<str
           case '/':
             return +lhs / +rhs
         }
+      // eslint-disable-next-line no-fallthrough
       default:
         throw new SyntaxError(panic('symbol not implemented', symbol))
     }

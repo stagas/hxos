@@ -21,6 +21,7 @@ module.exports = {
       'error',
       { args: 'all', argsIgnorePattern: '^_' },
     ],
-    '@typescript-eslint/no-namespace': 'off'
+    '@typescript-eslint/no-namespace': 'off',
+    'no-fallthrough': 'error'
   },
 }

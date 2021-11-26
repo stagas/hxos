@@ -54,6 +54,7 @@ export const build = (node: ParserNode | LexerToken): SExpr => {
           case '!':
             return f32.logical_not(build(lhs))
         }
+      // eslint-disable-next-line no-fallthrough
       default:
         throw new SyntaxError(panic('unary op not implemented', symbol))
     }
@@ -65,6 +66,7 @@ export const build = (node: ParserNode | LexerToken): SExpr => {
           case '?':
             return ifelse('f32', build(lhs), build(mhs), build(rhs))
         }
+      // eslint-disable-next-line no-fallthrough
       default:
         throw new SyntaxError(panic('ternary op not implemented', symbol))
     }
@@ -82,6 +84,7 @@ export const build = (node: ParserNode | LexerToken): SExpr => {
           case '/':
             return ['f32.div', build(lhs), build(rhs)]
         }
+      // eslint-disable-next-line no-fallthrough
       default:
         throw new SyntaxError(panic('binary op not implemented', symbol))
     }
