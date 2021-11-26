@@ -70,7 +70,6 @@ export const parse = (input: string) => {
         debugger
         if (token.value === '(') {
           lhs = expr_bp(0)
-          console.log('here!')
           expect('ops', ')')
           break
         }

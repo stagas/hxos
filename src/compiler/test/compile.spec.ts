@@ -14,7 +14,7 @@ const make = async (input: string) => {
   const source = S(['func', ['export', '"main"'], ['result', 'f32'], wat])
   let buffer
   try {
-    buffer = compile(source)
+    buffer = compile(source, { metrics: false })
   } catch (e) {
     const error = e as Error
     const index = error.message?.split('position: ')?.[1]?.split(' ')?.[0] ?? source.length

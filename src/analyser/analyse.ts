@@ -2,41 +2,43 @@ import { ParserNode, panic, LexerToken } from '../parser'
 
 export namespace Op {
   export enum module {
-    compile,
-    noop,
+    compile = 'compile',
+    noop = 'noop',
   }
   export enum type {
-    convert,
+    convert = 'convert',
   }
   export enum arithmetic {
-    plus,
-    minus,
-    add,
-    sub,
-    mul,
-    div,
+    plus = 'plus',
+    minus = 'minus',
+    add = 'add',
+    sub = 'sub',
+    mul = 'mul',
+    div = 'div',
   }
   export enum logical {
-    not,
+    not = 'not',
   }
   export enum literal {
-    const,
+    const = 'const',
   }
   export enum branch {
-    ifelse,
+    ifelse = 'ifelse',
   }
   export enum validation_error {
-    type_mismatch,
+    type_mismatch = 'type_mismatch',
   }
 }
 
 type OpKind = Op.module | Op.type | Op.arithmetic | Op.logical | Op.literal | Op.branch | Op.validation_error
 
 export class Type {
+  name: string
   check: (x: Type) => boolean
   matches: (x: LexerToken) => boolean
 
-  constructor(checker: null | ((x: Type) => boolean), matcher: (x: LexerToken) => boolean) {
+  constructor(name: string, checker: null | ((x: Type) => boolean), matcher: (x: LexerToken) => boolean) {
+    this.name = name
     this.check =
       checker ??
       function (this: Type, x: Type) {
@@ -54,16 +56,21 @@ export class Type {
   satisfies(x: Type): boolean {
     return x.check(this)
   }
+  toString() {
+    return this.name
+  }
   static any = new Type(
+    'i32',
     () => true,
     () => true
   )
   static bool = new Type(
+    'i32',
     x => x.satisfies(Type.i32),
     x => x.value === '0' || x.value === '1'
   )
-  static i32 = new Type(null, x => !x.value.includes('.'))
-  static f32 = new Type(null, x => x.value.includes('.'))
+  static i32 = new Type('i32', null, x => !x.value.includes('.'))
+  static f32 = new Type('f32', null, x => x.value.includes('.'))
 }
 
 const Types = ['any', 'bool', 'i32', 'f32'].reverse() as (keyof typeof Type)[]
@@ -72,7 +79,7 @@ const inferType = (x: LexerToken): Type => {
   return Type[Types.find((type: keyof typeof Type) => Type[type].matches(x)) ?? 'any']
 }
 
-interface AnalyserNode {
+export interface AnalyserNode {
   node: ParserNode
   type: Type
   kind: OpKind
