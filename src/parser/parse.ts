@@ -12,7 +12,7 @@ const regexp = joinRegExp(
   [
     /(?<ids>[a-z_][a-z0-9_]*)/,
     /(?<num>\d+(\.\d*)?)/,
-    /(?<ops>\+\+|\-\-|\->|\+=|-=|\*=|\/=|%=|<<=|>>=|&=|\^=|\|=|&&|\|\||!=|==|>=|>|<=|<|>>|<<|[\[\]\(\)\",\-~+*\/%=<>?!:;.|&^@$]{1})/,
+    /(?<ops>:=|\+\+|\-\-|\->|\+=|-=|\*=|\/=|%=|<<=|>>=|&=|\^=|\|=|&&|\|\||!=|==|>=|>|<=|<|>>|<<|[\[\]\(\)\",\-~+*\/%=<>?!:;.|&^@$]{1})/,
     /(?<nul>\s+)/,
     /(?<err>.)/,
   ],
@@ -68,20 +68,34 @@ export const parse = (input: string): ParserNode | ParserNode[] => {
       case 'eof':
         return [token]
       case 'ids':
-        if (accept('ops', '(')) {
+        if ((op = accept('ops', ':='))) {
+          if (min_bp > 0) {
+            throw new SyntaxError(panic('functions can only be declared at the beginning of an expression', op))
+          }
           const fn = token
           const args = []
           let arg
-          while ((arg = accept('ids')) && args.push(arg) && peek().value !== ')') {
+          while ((arg = accept('ids')) && args.push(arg)) {
+            if (!accept('ops', ',')) break
+          }
+          const body = expr_bp(0)
+          if (body[0].group === 'eof') {
+            throw new SyntaxError(panic('expected expression, instead received', fn))
+          }
+          lhs = [op, fn, args, body]
+          break
+        }
+
+        if (accept('ops', '(')) {
+          const fn = token
+          const params = []
+          let param
+          while ((param = expr_bp(0)) && params.push(param) && peek().value !== ')') {
             expect('ops', ',')
           }
           expect('ops', ')')
-          const op = expect('ops', ':')
-          const body = expr_bp(0)
-          if (body[0].group === 'eof') {
-            throw new SyntaxError(panic('expected expression, not end of input', op))
-          }
-          lhs = [op, fn, args, body]
+
+          lhs = [{ ...fn, value: ':@' }, fn, params]
           break
         }
       // eslint-disable-next-line no-fallthrough

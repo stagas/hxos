@@ -92,26 +92,6 @@ describe('parse', () => {
     expect(() => parse('a[1')).toThrow('eof')
   })
 
-  it('function declaration', () => {
-    let s
-
-    s = parse('f(a,b):1')
-    expect(to_string(s)).toEqual('(: f (a b) 1)')
-
-    expect(() => parse('f(a,b):')).toThrow('expected expression')
-
-    s = parse('f(a,b):+1')
-    expect(to_string(s)).toEqual('(: f (a b) (+ 1))')
-
-    expect(() => parse('f(a,b):/1')).toThrow()
-
-    s = parse('f():1')
-    expect(to_string(s)).toEqual('(: f () 1)')
-
-    s = parse('f():1+2')
-    expect(to_string(s)).toEqual('(: f () (+ 1 2))')
-  })
-
   it('end of expressions', () => {
     let s
 
@@ -120,5 +100,57 @@ describe('parse', () => {
 
     s = parse('1+2;3+4;5/6')
     expect(to_string(s)).toEqual('((+ 1 2) (+ 3 4) (/ 5 6))')
+  })
+
+  it('function declaration', () => {
+    let s
+
+    s = parse('f:=a,b 1')
+    expect(to_string(s)).toEqual('(:= f (a b) 1)')
+
+    expect(() => parse('1+f:=a,b')).toThrow('functions can only be declared')
+
+    expect(() => parse('1+f:=a,b+2')).toThrow('functions can only be declared')
+
+    expect(() => parse('f:=a,b')).toThrow('expected expression')
+
+    s = parse('f:=a,b +1')
+    expect(to_string(s)).toEqual('(:= f (a b) (+ 1))')
+
+    expect(() => parse('f:=a,b/1')).toThrow()
+
+    s = parse('f:= 1')
+    expect(to_string(s)).toEqual('(:= f () 1)')
+
+    s = parse('f:=1')
+    expect(to_string(s)).toEqual('(:= f () 1)')
+
+    s = parse('f:= 1+2')
+    expect(to_string(s)).toEqual('(:= f () (+ 1 2))')
+
+    s = parse('f:=a 1+2')
+    expect(to_string(s)).toEqual('(:= f a (+ 1 2))')
+  })
+
+  it('function call', () => {
+    let s
+
+    s = parse('f(a,b)')
+    expect(to_string(s)).toEqual('(:@ f (, a b))')
+
+    s = parse('f(1+2,3)')
+    expect(to_string(s)).toEqual('(:@ f (, (+ 1 2) 3))')
+
+    s = parse('f(1+2,3+4)')
+    expect(to_string(s)).toEqual('(:@ f (, (+ 1 2) (+ 3 4)))')
+
+    s = parse('1+f(a,b)')
+    expect(to_string(s)).toEqual('(+ 1 (:@ f (, a b)))')
+
+    s = parse('1+f(a,2+b(5.5))')
+    expect(to_string(s)).toEqual('(+ 1 (:@ f (, a (+ 2 (:@ b 5.5)))))')
+
+    s = parse('f(2)+a(b/2)')
+    expect(to_string(s)).toEqual('(+ (:@ f 2) (:@ a (/ b 2)))')
   })
 })
