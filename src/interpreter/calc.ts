@@ -1,9 +1,16 @@
 import { ParserNode, panic, LexerToken } from '../parser'
 
-export const calc = (node: ParserNode | LexerToken | number, context: Record<string, number> = {}): number => {
+export const calc = (
+  node: ParserNode[] | ParserNode | LexerToken | number,
+  context: Record<string, number> = {}
+): number => {
   if (node == null) return 0
   if (typeof node === 'number') return node
   if (!Array.isArray(node)) node = [node]
+  if (!('group' in node[0])) {
+    // return only last value
+    return calc(node.at(-1) as ParserNode, context)
+  }
   if (node.length === 1) {
     const token = node[0]
     if (token.group === 'num') {

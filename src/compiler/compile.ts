@@ -25,10 +25,15 @@ const generator = () => {
   return { ifelse, f32 }
 }
 
-export const build = (node: ParserNode | LexerToken): SExpr => {
+export const build = (node: ParserNode[] | ParserNode | LexerToken): SExpr => {
   const { ifelse, f32 } = generator()
 
   if (!Array.isArray(node)) node = [node]
+
+  if (!('group' in node[0])) {
+    // only build the last expression
+    return build(node.at(-1) as ParserNode)
+  }
 
   if (node.length === 1) {
     const token = node[0]

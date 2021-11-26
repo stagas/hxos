@@ -24,6 +24,57 @@ describe('analyse', () => {
     })
   })
 
+  it('multiple expressions, last one types', () => {
+    expect(make('1;2')).toMatchObject({
+      kind: Op['module']['noop'],
+      type: Type['i32'],
+      children: [
+        {
+          kind: Op['literal']['const'],
+          type: Type['i32'],
+          node: [{ value: '1' }],
+        },
+        {
+          kind: Op['literal']['const'],
+          type: Type['i32'],
+          node: [{ value: '2' }],
+        },
+      ],
+    })
+    expect(make('1;2.2')).toMatchObject({
+      kind: Op['module']['noop'],
+      type: Type['f32'],
+      children: [
+        {
+          kind: Op['literal']['const'],
+          type: Type['i32'],
+          node: [{ value: '1' }],
+        },
+        {
+          kind: Op['literal']['const'],
+          type: Type['f32'],
+          node: [{ value: '2.2' }],
+        },
+      ],
+    })
+    expect(make('1.1;2')).toMatchObject({
+      kind: Op['module']['noop'],
+      type: Type['i32'],
+      children: [
+        {
+          kind: Op['literal']['const'],
+          type: Type['f32'],
+          node: [{ value: '1.1' }],
+        },
+        {
+          kind: Op['literal']['const'],
+          type: Type['i32'],
+          node: [{ value: '2' }],
+        },
+      ],
+    })
+  })
+
   it('arithmetic', () => {
     expect(make('1+2')).toMatchObject({
       kind: Op['arithmetic']['add'],

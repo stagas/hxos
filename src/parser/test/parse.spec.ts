@@ -2,7 +2,7 @@ import { parse, ParserNode, LexerToken } from '../parse'
 
 let total = 0
 
-function to_string(node: ParserNode | LexerToken): string {
+function to_string(node: ParserNode[] | ParserNode | LexerToken): string {
   total++
   if (total > 1500) {
     throw new Error('Tree too large')
@@ -24,7 +24,7 @@ describe('parse', () => {
     let s
 
     s = parse('')
-    expect(to_string(s)).toEqual('')
+    expect(to_string(s)).toEqual('()')
 
     s = parse('1')
     expect(to_string(s)).toEqual('1')
@@ -110,5 +110,15 @@ describe('parse', () => {
 
     s = parse('f():1+2')
     expect(to_string(s)).toEqual('(: f () (+ 1 2))')
+  })
+
+  it('end of expressions', () => {
+    let s
+
+    s = parse('1+2;3+4')
+    expect(to_string(s)).toEqual('((+ 1 2) (+ 3 4))')
+
+    s = parse('1+2;3+4;5/6')
+    expect(to_string(s)).toEqual('((+ 1 2) (+ 3 4) (/ 5 6))')
   })
 })

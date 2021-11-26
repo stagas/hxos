@@ -82,14 +82,14 @@ const inferType = (x: LexerToken): Type => {
 }
 
 export interface AnalyserNode {
-  node: ParserNode
+  node: ParserNode | ParserNode[]
   type: Type
   kind: OpKind
   children: AnalyserNode[]
 }
 
 export const analyse = (
-  node: ParserNode | LexerToken,
+  node: ParserNode[] | ParserNode | LexerToken,
   caller: Partial<AnalyserNode> & { type: Type } = {
     type: Type['any'],
   }
@@ -99,99 +99,114 @@ export const analyse = (
   let type: Type = Type['any']
   let children: AnalyserNode[] = []
   let kind: OpKind = Op['module']['noop']
-
   let op: AnalyserNode
 
-  if (node.length === 1) {
-    const token = node[0]
-    switch (token.group) {
-      case 'num':
-        type = inferType(token)
-        kind = Op['literal']['const']
+  while (1) {
+    if (!('group' in node[0])) {
+      if (node.length > 1) {
+        children = node.map(n => analyse(n))
+        type = children.at(-1)!.type
         break
-      default:
-        throw new SyntaxError(panic('bad node', token))
+      } else {
+        node = node[0]
+      }
     }
-  } else {
-    const [symbol, l, r, m] = node
 
-    let la: AnalyserNode
-    let ma: AnalyserNode
-    let ra: AnalyserNode
+    node = node as ParserNode // :)
 
-    if (r == null) {
-      // unary
-      switch (symbol.group) {
-        case 'ops':
-          switch (symbol.value) {
-            case '!':
-              la = analyse(l, { type: Type['bool'] })
-              break
-            default:
-              la = analyse(l, { type: caller.type })
-              break
-          }
-
-          type = la.type
-          children = [la]
-          kind = {
-            '!': Op['logical']['not'],
-            '+': Op['arithmetic']['plus'],
-            '-': Op['arithmetic']['minus'],
-          }[symbol.value] as OpKind
+    if (node.length === 1) {
+      const token = node[0]
+      switch (token.group) {
+        case 'num':
+          type = inferType(token)
+          kind = Op['literal']['const']
           break
-      }
-      if (!kind) {
-        throw new SyntaxError(panic('unary op not implemented', symbol))
-      }
-    } else if (m != null) {
-      // ternary
-      switch (symbol.group) {
-        case 'ops':
-          switch (symbol.value) {
-            case '?':
-              la = analyse(l, { type: Type['bool'] })
-              ma = analyse(m, { type: caller.type })
-              ra = analyse(r, { type: caller.type })
-
-              type = ma.type
-              children = [la, ma, ra]
-              kind = Op['branch']['ifelse']
-              break
-          }
-          break
-      }
-      if (!kind) {
-        throw new SyntaxError(panic('ternary op not implemented', symbol))
+        default:
+          throw new SyntaxError(panic('bad node', token))
       }
     } else {
-      // binary
-      switch (symbol.group) {
-        case 'ops':
-          la = analyse(l)
-          ra = analyse(r)
+      const [symbol, l, r, m] = node
 
-          // type cast to the greatest precision, f32 wins over i32, wins over bool?
-          if (ra.type.check(la.type) === false) {
-            if (ra.type === Type['f32']) la = Type['f32'].convert(la)
-            else if (la.type === Type['f32']) ra = Type['f32'].convert(ra)
-            // TODO: handle boolean?
-          }
+      let la: AnalyserNode
+      let ma: AnalyserNode
+      let ra: AnalyserNode
 
-          type = ra.type
-          children = [la, ra]
-          kind = {
-            '-': Op['arithmetic']['sub'],
-            '+': Op['arithmetic']['add'],
-            '*': Op['arithmetic']['mul'],
-            '/': Op['arithmetic']['div'],
-          }[symbol.value] as OpKind
-          break
-      }
-      if (!kind) {
-        throw new SyntaxError(panic('binary op not implemented', symbol))
+      if (r == null) {
+        // unary
+        switch (symbol.group) {
+          case 'ops':
+            switch (symbol.value) {
+              case '!':
+                la = analyse(l, { type: Type['bool'] })
+                break
+              default:
+                la = analyse(l, { type: caller.type })
+                break
+            }
+
+            type = la.type
+            children = [la]
+            kind = {
+              '!': Op['logical']['not'],
+              '+': Op['arithmetic']['plus'],
+              '-': Op['arithmetic']['minus'],
+            }[symbol.value] as OpKind
+            break
+        }
+        if (!kind) {
+          throw new SyntaxError(panic('unary op not implemented', symbol))
+        }
+      } else if (m != null) {
+        // ternary
+        switch (symbol.group) {
+          case 'ops':
+            switch (symbol.value) {
+              case '?':
+                la = analyse(l, { type: Type['bool'] })
+                ma = analyse(m, { type: caller.type })
+                ra = analyse(r, { type: caller.type })
+
+                type = ma.type
+                children = [la, ma, ra]
+                kind = Op['branch']['ifelse']
+                break
+            }
+            break
+        }
+        if (!kind) {
+          throw new SyntaxError(panic('ternary op not implemented', symbol))
+        }
+      } else {
+        // binary
+        switch (symbol.group) {
+          case 'ops':
+            la = analyse(l)
+            ra = analyse(r)
+
+            // type cast to the greatest precision, f32 wins over i32, wins over bool?
+            if (ra.type.check(la.type) === false) {
+              if (ra.type === Type['f32']) la = Type['f32'].convert(la)
+              else if (la.type === Type['f32']) ra = Type['f32'].convert(ra)
+              // TODO: handle boolean?
+            }
+
+            type = ra.type
+            children = [la, ra]
+            kind = {
+              '-': Op['arithmetic']['sub'],
+              '+': Op['arithmetic']['add'],
+              '*': Op['arithmetic']['mul'],
+              '/': Op['arithmetic']['div'],
+            }[symbol.value] as OpKind
+            break
+        }
+        if (!kind) {
+          throw new SyntaxError(panic('binary op not implemented', symbol))
+        }
       }
     }
+
+    break
   }
 
   op = {

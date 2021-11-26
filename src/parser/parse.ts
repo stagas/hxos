@@ -12,7 +12,7 @@ const regexp = joinRegExp(
   [
     /(?<ids>[a-z_][a-z0-9_]*)/,
     /(?<num>\d+(\.\d*)?)/,
-    /(?<ops>\+\+|\-\-|\->|\+=|-=|\*=|\/=|%=|<<=|>>=|&=|\^=|\|=|&&|\|\||!=|==|>=|>|<=|<|>>|<<|[\[\]\(\)\",\-~+*\/%=<>?!:.|&^@$]{1})/,
+    /(?<ops>\+\+|\-\-|\->|\+=|-=|\*=|\/=|%=|<<=|>>=|&=|\^=|\|=|&&|\|\||!=|==|>=|>|<=|<|>>|<<|[\[\]\(\)\",\-~+*\/%=<>?!:;.|&^@$]{1})/,
     /(?<nul>\s+)/,
     /(?<err>.)/,
   ],
@@ -32,7 +32,7 @@ export const panic = (message: string, token: LexerToken) =>
     code: token?.source?.input ?? '<source missing>',
   }).message
 
-export const parse = (input: string) => {
+export const parse = (input: string): ParserNode | ParserNode[] => {
   const { onerror, filter, peek, advance, expect, accept } = lexer(input)
 
   filter((token: LexerToken) => token.group !== 'nul')
@@ -89,6 +89,11 @@ export const parse = (input: string) => {
         lhs = token
         break
       case 'ops':
+        if (token.value === ';') {
+          op = token
+          lhs = expr_bp(0)
+          break
+        }
         if (token.value === '(') {
           lhs = expr_bp(0)
           expect('ops', ')')
@@ -178,5 +183,13 @@ export const parse = (input: string) => {
     return Op.Infix[op].Binary || []
   }
 
-  return expr_bp(0)
+  const expressions = [] as ParserNode[]
+
+  while (1) {
+    const exp = expr_bp(0)
+    if (exp[0].group === 'eof') break
+    expressions.push(exp)
+  }
+
+  return expressions
 }
