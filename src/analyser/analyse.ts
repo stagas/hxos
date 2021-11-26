@@ -54,19 +54,22 @@ export class Type {
     return Type[x] === this
   }
   satisfies(x: Type): boolean {
+    debugger
     return x.check(this)
   }
   toString() {
     return this.name
   }
   static any = new Type(
-    'i32',
+    'any',
     () => true,
     () => true
   )
   static bool = new Type(
-    'i32',
-    x => x.satisfies(Type.i32),
+    'bool',
+    function (this: Type, x) {
+      return x === this || x.satisfies(Type.i32)
+    },
     x => x.value === '0' || x.value === '1'
   )
   static i32 = new Type('i32', null, x => !x.value.includes('.'))

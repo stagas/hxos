@@ -14,7 +14,7 @@ export interface MakeOptions {
   metrics?: boolean
 }
 
-export const make = async (input: string, { metrics = true }: MakeOptions = {}) => {
+export const make = async (input: string, { metrics = false }: MakeOptions = {}) => {
   metrics && console.time('make')
   metrics && console.time('parse')
   const tree = parse(input)
@@ -23,6 +23,7 @@ export const make = async (input: string, { metrics = true }: MakeOptions = {}) 
   const ast = analyse(tree, { type: Type.f32 })
   metrics && console.timeEnd('analyse')
   metrics && console.time('generate')
+  // debugger
   const wat = generate(ast)
   metrics && console.timeEnd('generate')
   metrics && console.time('compile')

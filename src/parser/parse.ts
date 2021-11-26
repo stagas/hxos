@@ -67,7 +67,6 @@ export const parse = (input: string) => {
         lhs = token
         break
       case 'ops':
-        debugger
         if (token.value === '(') {
           lhs = expr_bp(0)
           expect('ops', ')')
