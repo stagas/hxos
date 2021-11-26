@@ -24,19 +24,26 @@ const methods: GenMethods = {
         switch (b.type) {
           case Type['i32']:
             op = `f32.convert_i32_u`
+            break
           case Type['bool']:
             op = `f32.convert_i32_s`
+            break
         }
+        break
       case Type['i32']:
         switch (b.type) {
           case Type['f32']:
             op = `i32.trunc_f32_u`
+            break
         }
+        break
       case Type['bool']:
         switch (b.type) {
           case Type['f32']:
             op = `i32.trunc_f32_s`
+            break
         }
+        break
     }
     if (!op) {
       throw new TypeError(panic(`cannot convert ${b.type} to ${type}`, b.node[0]))

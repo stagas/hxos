@@ -54,7 +54,6 @@ export class Type {
     return Type[x] === this
   }
   satisfies(x: Type): boolean {
-    debugger
     return x.check(this)
   }
   toString() {
@@ -140,6 +139,7 @@ export const analyse = (
             '+': Op['arithmetic']['plus'],
             '-': Op['arithmetic']['minus'],
           }[symbol.value] as OpKind
+          break
       }
       if (!kind) {
         throw new SyntaxError(panic('unary op not implemented', symbol))
@@ -159,6 +159,7 @@ export const analyse = (
               kind = Op['branch']['ifelse']
               break
           }
+          break
       }
       if (!kind) {
         throw new SyntaxError(panic('ternary op not implemented', symbol))
