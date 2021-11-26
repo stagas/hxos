@@ -25,6 +25,9 @@ export namespace Op {
   export enum literal {
     const = 'literal.const',
   }
+  export enum reference {
+    local_get = 'reference.local_get',
+  }
   export enum branch {
     ifelse = 'branch.ifelse',
   }
@@ -33,7 +36,16 @@ export namespace Op {
   }
 }
 
-type OpKind = Op.module | Op.fn | Op.type | Op.arithmetic | Op.logical | Op.literal | Op.branch | Op.validation_error
+type OpKind =
+  | Op.module
+  | Op.fn
+  | Op.type
+  | Op.arithmetic
+  | Op.logical
+  | Op.literal
+  | Op.reference
+  | Op.branch
+  | Op.validation_error
 
 export class Type {
   name: string
@@ -88,6 +100,7 @@ export interface AnalyserNode {
   node: ParserNode | ParserNode[]
   type: Type
   kind: OpKind
+  caller: Partial<AnalyserNode>
   children: AnalyserNode[]
 }
 
@@ -95,6 +108,7 @@ export const analyse = (
   node: ParserNode[] | ParserNode | LexerToken,
   caller: Partial<AnalyserNode> & { type: Type } = {
     type: Type['any'],
+    caller: {},
   }
 ): AnalyserNode => {
   if (!Array.isArray(node)) node = [node]
@@ -102,7 +116,13 @@ export const analyse = (
   let type: Type = Type['any']
   let children: AnalyserNode[] = []
   let kind: OpKind = Op['module']['noop']
-  let op: AnalyserNode
+  let op: AnalyserNode = {
+    type,
+    kind,
+    node,
+    caller,
+    children,
+  }
 
   while (1) {
     if (!('group' in node[0])) {
@@ -117,13 +137,40 @@ export const analyse = (
 
     node = node as ParserNode // :)
 
+    op.node = node
+
     if (node.length === 1) {
       const token = node[0]
-      switch (token.group) {
+      out: switch (token.group) {
         case 'num':
           type = inferType(token)
           kind = Op['literal']['const']
           break
+        case 'ids':
+          let _caller = op.caller
+          while (_caller) {
+            if (_caller.kind === Op['fn']['declaration']) {
+              const [, , , args] = _caller.node as [unknown, unknown, unknown, ParserNode]
+              const ref = token.value
+              const arg = args?.find(a => a.value === ref)
+              if (arg) {
+                const value = args.indexOf(arg).toString()
+                kind = Op['reference']['local_get']
+                type = Type['f32'] // TODO: all refs are f32 for now
+                node = [
+                  {
+                    group: 'ref',
+                    value,
+                    index: token.index,
+                    source: token.source,
+                  },
+                ]
+                break out
+              }
+            }
+            _caller = _caller.caller as Partial<AnalyserNode>
+          }
+          throw new ReferenceError(panic('no such variable exists', token))
         default:
           throw new SyntaxError(panic('bad node', token))
       }
@@ -140,10 +187,12 @@ export const analyse = (
           case 'ops':
             switch (symbol.value) {
               case '!':
-                la = analyse(l, { type: Type['bool'] })
+                op.type = Type['bool']
+                la = analyse(l, op)
                 break
               default:
-                la = analyse(l, { type: caller.type })
+                op.type = caller.type
+                la = analyse(l, op)
                 break
             }
 
@@ -165,8 +214,9 @@ export const analyse = (
           case 'ops':
             switch (symbol.value) {
               case ':=':
-                kind = Op['fn']['declaration']
-                ra = analyse(r, { type: caller.type })
+                kind = op.kind = Op['fn']['declaration']
+                op.type = caller.type
+                ra = analyse(r, op) //{ type: caller.type })
                 type = ra.type
                 children = [ra]
                 break
@@ -189,8 +239,8 @@ export const analyse = (
         // binary
         switch (symbol.group) {
           case 'ops':
-            la = analyse(l)
-            ra = analyse(r)
+            la = analyse(l, op)
+            ra = analyse(r, op)
 
             // type cast to the greatest precision, f32 wins over i32, wins over bool?
             if (ra.type.check(la.type) === false) {
@@ -218,12 +268,13 @@ export const analyse = (
     break
   }
 
-  op = {
+  Object.assign(op, {
     kind,
     type,
     node,
+    caller,
     children,
-  }
+  })
 
   // convert op type to caller type before returning aka automatic type casting
 
