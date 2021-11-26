@@ -148,4 +148,81 @@ describe('analyse', () => {
       ],
     })
   })
+
+  it('function definition', () => {
+    expect(make('f:=1')).toMatchObject({
+      kind: Op['fn']['declaration'],
+      type: Type['i32'],
+      node: [{ value: ':=' }, { value: 'f' }, [{ value: '1' }], []],
+      children: [
+        {
+          kind: Op['literal']['const'],
+          type: Type['i32'],
+          node: [{ value: '1' }],
+        },
+      ],
+    })
+
+    expect(make('f:=1.5')).toMatchObject({
+      kind: Op['fn']['declaration'],
+      type: Type['f32'],
+      children: [
+        {
+          kind: Op['literal']['const'],
+          type: Type['f32'],
+          node: [{ value: '1.5' }],
+        },
+      ],
+    })
+
+    expect(make('f:=a 1')).toMatchObject({
+      kind: Op['fn']['declaration'],
+      type: Type['i32'],
+      node: [{ value: ':=' }, { value: 'f' }, [{ value: '1' }], [{ value: 'a' }]],
+      children: [
+        {
+          kind: Op['literal']['const'],
+          type: Type['i32'],
+          node: [{ value: '1' }],
+        },
+      ],
+    })
+
+    expect(make('f:=a,b 1')).toMatchObject({
+      kind: Op['fn']['declaration'],
+      type: Type['i32'],
+      node: [{ value: ':=' }, { value: 'f' }, [{ value: '1' }], [{ value: 'a' }, { value: 'b' }]],
+      children: [
+        {
+          kind: Op['literal']['const'],
+          type: Type['i32'],
+          node: [{ value: '1' }],
+        },
+      ],
+    })
+
+    expect(make('f:=1+2')).toMatchObject({
+      kind: Op['fn']['declaration'],
+      type: Type['i32'],
+      children: [
+        {
+          kind: Op['arithmetic']['add'],
+          type: Type['i32'],
+          node: [{ value: '+' }, { value: '1' }, [{ value: '2' }]],
+          children: [
+            {
+              kind: Op['literal']['const'],
+              type: Type['i32'],
+              node: [{ value: '1' }],
+            },
+            {
+              kind: Op['literal']['const'],
+              type: Type['i32'],
+              node: [{ value: '2' }],
+            },
+          ],
+        },
+      ],
+    })
+  })
 })

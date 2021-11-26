@@ -82,7 +82,7 @@ export const parse = (input: string): ParserNode | ParserNode[] => {
           if (body[0].group === 'eof') {
             throw new SyntaxError(panic('expected expression, instead received', fn))
           }
-          lhs = [op, fn, args, body]
+          lhs = [op, fn, body, args]
           break
         }
 

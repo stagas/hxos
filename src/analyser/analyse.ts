@@ -5,6 +5,9 @@ export namespace Op {
     compile = 'module.compile',
     noop = 'module.noop',
   }
+  export enum fn {
+    declaration = 'fn.declaration',
+  }
   export enum type {
     convert = 'type.convert',
   }
@@ -30,7 +33,7 @@ export namespace Op {
   }
 }
 
-type OpKind = Op.module | Op.type | Op.arithmetic | Op.logical | Op.literal | Op.branch | Op.validation_error
+type OpKind = Op.module | Op.fn | Op.type | Op.arithmetic | Op.logical | Op.literal | Op.branch | Op.validation_error
 
 export class Type {
   name: string
@@ -161,6 +164,12 @@ export const analyse = (
         switch (symbol.group) {
           case 'ops':
             switch (symbol.value) {
+              case ':=':
+                kind = Op['fn']['declaration']
+                ra = analyse(r, { type: caller.type })
+                type = ra.type
+                children = [ra]
+                break
               case '?':
                 la = analyse(l, { type: Type['bool'] })
                 ma = analyse(m, { type: caller.type })
