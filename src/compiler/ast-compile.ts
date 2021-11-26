@@ -27,7 +27,7 @@ export const make = async (input: string, { metrics = false }: MakeOptions = {})
   const wat = generate(ast)
   metrics && console.timeEnd('generate')
   metrics && console.time('compile')
-  const source = S(['func', ['export', '"main"'], ['result', 'f32'], wat])
+  const source = wat[0] === 'func' ? S(wat) : S(['func', ['export', '"main"'], ['result', 'f32'], wat])
   const buffer = await compile(source)
   metrics && console.timeEnd('compile')
   metrics && console.timeEnd('make')
@@ -51,6 +51,6 @@ export const compile = async (source: string) => {
         }).message
     )
   }
-  const mod = (await wasm(buffer)) as { main(): number }
+  const mod = (await wasm(buffer)) as { [k: string]: (...args: number[]) => number }
   return mod
 }

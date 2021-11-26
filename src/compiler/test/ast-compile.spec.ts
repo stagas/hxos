@@ -47,6 +47,17 @@ describe('compile', () => {
     expect((await make('!0?2:3')).main()).toEqual(2)
   })
 
+  it('function declaration', async () => {
+    expect((await make('f:=1?2:3')).f()).toEqual(2)
+    expect((await make('f:=0?2:3')).f()).toEqual(3)
+  })
+
+  it('function declaration w/args and references', async () => {
+    expect((await make('f:=a a*2')).f(1)).toEqual(2)
+    expect((await make('f:=a a*2')).f(5)).toEqual(10)
+    expect((await make('f:=a,b,c,d a*b+c*d')).f(3, 4, 5, 6)).toEqual(42)
+  })
+
   // it.skip('handles very big expressions', async () => {
   //   await expect(
   //     make(
