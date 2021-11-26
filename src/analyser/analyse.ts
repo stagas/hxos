@@ -7,6 +7,7 @@ export namespace Op {
   }
   export enum fn {
     declaration = 'fn.declaration',
+    call = 'fn.call',
   }
   export enum type {
     convert = 'type.convert',
@@ -63,7 +64,7 @@ export class Type {
   }
 
   convert(this: Type, x: AnalyserNode): AnalyserNode {
-    return { kind: Op['type']['convert'], type: this, node: [], caller: x.caller, children: [x] } // TODO: revisit this for correctness
+    return { kind: Op['type']['convert'], type: this, node: x.node, caller: x.caller, children: [x] } // TODO: revisit this for correctness
   }
   equals(x: keyof typeof Type): boolean {
     return Type[x] === this
@@ -100,16 +101,19 @@ export interface AnalyserNode {
   node: ParserNode | ParserNode[]
   type: Type
   kind: OpKind
-  caller: Partial<AnalyserNode>
+  caller?: Partial<AnalyserNode>
   children: AnalyserNode[]
 }
+
+let deferred = [] as [unknown[], (...args: any) => void][]
+let symbols = {} as Record<string, AnalyserNode>
 
 export const analyse = (
   node: ParserNode[] | ParserNode | LexerToken,
   caller: Partial<AnalyserNode> & { type: Type } = {
     type: Type['any'],
-    caller: {},
-  }
+  },
+  isRoot = false
 ): AnalyserNode => {
   if (!Array.isArray(node)) node = [node]
 
@@ -122,6 +126,11 @@ export const analyse = (
     node,
     caller,
     children,
+  }
+
+  if (isRoot) {
+    deferred = []
+    symbols = {}
   }
 
   while (1) {
@@ -205,7 +214,7 @@ export const analyse = (
             }[symbol.value] as OpKind
             break
         }
-        if (!kind) {
+        if (!kind || kind === Op['module']['noop']) {
           throw new SyntaxError(panic('unary op not implemented', symbol))
         }
       } else if (m != null) {
@@ -216,14 +225,27 @@ export const analyse = (
               case ':=':
                 kind = op.kind = Op['fn']['declaration']
                 op.type = caller.type
-                ra = analyse(r, op) //{ type: caller.type })
-                type = ra.type
-                children = [ra]
+                symbols[l.value] = op
+                deferred.push([
+                  [op, r],
+                  (op: AnalyserNode, r: LexerToken) => {
+                    ra = analyse(r, op)
+                    type = ra.type
+                    children = [ra]
+                    Object.assign(op, {
+                      type,
+                      children,
+                    })
+                  },
+                ])
                 break
               case '?':
-                la = analyse(l, { type: Type['bool'] })
-                ma = analyse(m, { type: caller.type })
-                ra = analyse(r, { type: caller.type })
+                op.type = Type['bool']
+                la = analyse(l, op)
+
+                op.type = caller.type
+                ma = analyse(m, op)
+                ra = analyse(r, op)
 
                 type = ma.type
                 children = [la, ma, ra]
@@ -232,12 +254,34 @@ export const analyse = (
             }
             break
         }
-        if (!kind) {
+        if (!kind || kind === Op['module']['noop']) {
           throw new SyntaxError(panic('ternary op not implemented', symbol))
         }
       } else {
         // binary
         switch (symbol.group) {
+          case 'ids':
+            switch (symbol.value) {
+              case ':@': // function call
+                kind = op.kind = Op['fn']['call']
+                op.type = caller.type
+                const targetfn = symbols[l.value]
+                type = targetfn.type
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if ((r as any).length) {
+                  ra = analyse(r, op)
+
+                  // TODO: all params are f32 for now
+                  if (Type['f32'].satisfies(ra.type) === false) {
+                    ra = Type['f32'].convert(ra)
+                  }
+
+                  children = [ra]
+                }
+                break
+            }
+            break
+
           case 'ops':
             la = analyse(l, op)
             ra = analyse(r, op)
@@ -259,7 +303,7 @@ export const analyse = (
             }[symbol.value] as OpKind
             break
         }
-        if (!kind) {
+        if (!kind || kind === Op['module']['noop']) {
           throw new SyntaxError(panic('binary op not implemented', symbol))
         }
       }
@@ -280,6 +324,12 @@ export const analyse = (
 
   if (op.type.satisfies(caller.type) === false) {
     op = caller.type.convert(op)
+  }
+
+  if (isRoot) {
+    deferred.forEach(([args, fn]) => {
+      fn(...args)
+    })
   }
 
   return op

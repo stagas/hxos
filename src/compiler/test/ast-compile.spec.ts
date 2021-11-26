@@ -48,21 +48,28 @@ describe('compile', () => {
   })
 
   it('function declaration', async () => {
-    expect((await make('f:=1?2:3')).f()).toEqual(2)
-    expect((await make('f:=0?2:3')).f()).toEqual(3)
+    expect((await make('f:=>1?2:3')).f()).toEqual(2)
+    expect((await make('f:=>0?2:3')).f()).toEqual(3)
   })
 
   it('function declaration w/args and references', async () => {
-    expect((await make('f:=a a*2')).f(1)).toEqual(2)
-    expect((await make('f:=a a*2')).f(5)).toEqual(10)
-    expect((await make('f:=a,b,c,d a*b+c*d')).f(3, 4, 5, 6)).toEqual(42)
+    expect((await make('f:=a>a*2')).f(1)).toEqual(2)
+    expect((await make('f:=a>a*2')).f(5)).toEqual(10)
+    expect((await make('f:=a,b,c,d>a*b+c*d')).f(3, 4, 5, 6)).toEqual(42)
   })
 
   it('multiple functions declarations', async () => {
-    const mod = await make('a:=x x*2; b:=x x*4; c:=x,y x*y')
+    const mod = await make('a:=x>x*2; b:=x>x*4; c:=x,y>x*y')
     expect(mod.a(2)).toEqual(4)
     expect(mod.b(2)).toEqual(8)
     expect(mod.c(3, 4)).toEqual(12)
+  })
+
+  it('function calls', async () => {
+    expect((await make('f:=>1; c:=>f()')).c()).toEqual(1)
+    expect((await make('f:=x>x*2; c:=>f(2)')).c()).toEqual(4)
+    expect((await make('f:=x>x*2; c:=x>f(x)')).c(5)).toEqual(10)
+    expect((await make('f:=x>x*2; c:=x>f(x)+f(x*2)')).c(5)).toEqual(30)
   })
 
   // it.skip('handles very big expressions', async () => {

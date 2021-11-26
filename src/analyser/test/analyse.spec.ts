@@ -3,7 +3,7 @@ import { parse } from '../../parser'
 
 const make = (input: string) => {
   const tree = parse(input)
-  const ast = analyse(tree)
+  const ast = analyse(tree, { type: Type['any'] }, true)
   return ast
 }
 
@@ -109,7 +109,7 @@ describe('analyse', () => {
         {
           kind: Op['type']['convert'],
           type: Type['f32'],
-          node: [],
+          node: [{ value: '2' }],
           children: [
             {
               kind: Op['literal']['const'],
@@ -131,7 +131,7 @@ describe('analyse', () => {
         {
           kind: Op['type']['convert'],
           type: Type['f32'],
-          node: [],
+          node: [{ value: '1' }],
           children: [
             {
               kind: Op['literal']['const'],
@@ -150,7 +150,7 @@ describe('analyse', () => {
   })
 
   it('function definition', () => {
-    expect(make('f:=1')).toMatchObject({
+    expect(make('f:=>1')).toMatchObject({
       kind: Op['fn']['declaration'],
       type: Type['i32'],
       node: [{ value: ':=' }, { value: 'f' }, [{ value: '1' }], []],
@@ -163,7 +163,7 @@ describe('analyse', () => {
       ],
     })
 
-    expect(make('f:=1.5')).toMatchObject({
+    expect(make('f:=>1.5')).toMatchObject({
       kind: Op['fn']['declaration'],
       type: Type['f32'],
       children: [
@@ -175,7 +175,7 @@ describe('analyse', () => {
       ],
     })
 
-    expect(make('f:=a 1')).toMatchObject({
+    expect(make('f:=a>1')).toMatchObject({
       kind: Op['fn']['declaration'],
       type: Type['i32'],
       node: [{ value: ':=' }, { value: 'f' }, [{ value: '1' }], [{ value: 'a' }]],
@@ -188,7 +188,7 @@ describe('analyse', () => {
       ],
     })
 
-    expect(make('f:=a,b 1')).toMatchObject({
+    expect(make('f:=a,b>1')).toMatchObject({
       kind: Op['fn']['declaration'],
       type: Type['i32'],
       node: [{ value: ':=' }, { value: 'f' }, [{ value: '1' }], [{ value: 'a' }, { value: 'b' }]],
@@ -201,7 +201,7 @@ describe('analyse', () => {
       ],
     })
 
-    expect(make('f:=1+2')).toMatchObject({
+    expect(make('f:=>1+2')).toMatchObject({
       kind: Op['fn']['declaration'],
       type: Type['i32'],
       children: [

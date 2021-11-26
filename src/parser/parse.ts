@@ -75,9 +75,10 @@ export const parse = (input: string): ParserNode | ParserNode[] => {
           const fn = token
           const args = []
           let arg
-          while ((arg = accept('ids')) && args.push(arg)) {
+          while ((arg = accept('ids')) && args.push(arg) && peek().value !== '>') {
             if (!accept('ops', ',')) break
           }
+          expect('ops', '>')
           const body = expr_bp(0)
           if (body[0].group === 'eof') {
             throw new SyntaxError(panic('expected expression, instead received', fn))
@@ -90,12 +91,13 @@ export const parse = (input: string): ParserNode | ParserNode[] => {
           const fn = token
           const params = []
           let param
-          while ((param = expr_bp(0)) && params.push(param) && peek().value !== ')') {
-            expect('ops', ',')
-          }
+          if (peek().value !== ')')
+            while ((param = expr_bp(0)) && params.push(param) && peek().value !== ')') {
+              expect('ops', ',')
+            }
           expect('ops', ')')
 
-          lhs = [{ ...fn, value: ':@' }, fn, params]
+          lhs = [{ ...fn, value: ':@', source: fn.source }, fn, params]
           break
         }
       // eslint-disable-next-line no-fallthrough

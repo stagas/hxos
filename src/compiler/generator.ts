@@ -18,13 +18,19 @@ const methods: GenMethods = {
 
   // fn
   [Op.fn.declaration]: ({ type, node: [, name, , args], children: c }) => {
+    const ref = (name as LexerToken).value
     return [
       'func',
-      ['export', `"${(name as LexerToken).value}"`],
+      '$' + ref,
+      ['export', `"${ref}"`],
       ...(args as LexerToken[]).map(() => ['param', 'f32']), // TODO: all params f32 for now
       ['result', type + ''],
       ...g(c),
     ]
+  },
+  [Op.fn.call]: a => {
+    const name = (a.node[1] as LexerToken).value
+    return ['call', '$' + name, ...children(a)]
   },
 
   // type

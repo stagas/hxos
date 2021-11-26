@@ -105,33 +105,33 @@ describe('parse', () => {
   it('function declaration', () => {
     let s
 
-    s = parse('f:=a,b 1')
+    s = parse('f:=a,b>1')
     expect(to_string(s)).toEqual('(:= f 1 (a b))')
 
-    expect(() => parse('1+f:=a,b')).toThrow('functions can only be declared')
+    expect(() => parse('1+f:=a,b>')).toThrow('functions can only be declared')
 
-    expect(() => parse('1+f:=a,b+2')).toThrow('functions can only be declared')
+    expect(() => parse('1+f:=a,b>+2')).toThrow('functions can only be declared')
 
-    expect(() => parse('f:=a,b')).toThrow('expected expression')
+    expect(() => parse('f:=a,b>')).toThrow('expected expression')
 
-    s = parse('f:=a,b +1')
+    s = parse('f:=a,b>+1')
     expect(to_string(s)).toEqual('(:= f (+ 1) (a b))')
 
     expect(() => parse('f:=a,b/1')).toThrow()
 
-    s = parse('f:= 1')
+    s = parse('f:=>1')
     expect(to_string(s)).toEqual('(:= f 1 ())')
 
-    s = parse('f:=1')
+    s = parse('f:=>1')
     expect(to_string(s)).toEqual('(:= f 1 ())')
 
-    s = parse('f:= 1+2')
+    s = parse('f:=>1+2')
     expect(to_string(s)).toEqual('(:= f (+ 1 2) ())')
 
-    s = parse('f:=a 1+2')
+    s = parse('f:=a>1+2')
     expect(to_string(s)).toEqual('(:= f (+ 1 2) a)')
 
-    s = parse('f:=a 1+2;3+4')
+    s = parse('f:=a>1+2;3+4')
     expect(to_string(s)).toEqual('((:= f (+ 1 2) a) (+ 3 4))')
   })
 
@@ -140,6 +140,12 @@ describe('parse', () => {
 
     s = parse('f(a,b)')
     expect(to_string(s)).toEqual('(:@ f (, a b))')
+
+    s = parse('f()')
+    expect(to_string(s)).toEqual('(:@ f ())')
+
+    s = parse('f:=>1;f()')
+    expect(to_string(s)).toEqual('((:= f 1 ()) (:@ f ()))')
 
     s = parse('f(1+2,3)')
     expect(to_string(s)).toEqual('(:@ f (, (+ 1 2) 3))')
