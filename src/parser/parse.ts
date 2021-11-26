@@ -6,7 +6,7 @@ import { annotate } from 'annotate-code'
 import { Op } from './op'
 
 export { LexerToken }
-export type ParserNode = LexerToken | LexerToken[]
+export type ParserNode = LexerToken[]
 
 const regexp = joinRegExp(
   [
@@ -40,12 +40,7 @@ export const parse = (input: string) => {
   onerror((error: Error) => {
     /* istanbul ignore next */
     if (error instanceof UnexpectedTokenError) {
-      throw new SyntaxError(
-        panic(
-          `bad token - expected: [${error.expectedGroup}]`,
-          error.currentToken
-        )
-      )
+      throw new SyntaxError(panic(`bad token - expected: [${error.expectedGroup}]`, error.currentToken))
     } else {
       /* istanbul ignore next */
       throw error
@@ -66,7 +61,7 @@ export const parse = (input: string) => {
 
     switch (token.group) {
       case 'eof':
-        return token
+        return [token]
       case 'ids':
       case 'num':
         lhs = token
@@ -93,7 +88,7 @@ export const parse = (input: string) => {
       const token = peek()
 
       let op
-      switch (token?.group) {
+      switch (token.group) {
         case 'eof':
           break loop
 
@@ -142,7 +137,7 @@ export const parse = (input: string) => {
       break
     }
 
-    return lhs as ParserNode
+    return (Array.isArray(lhs) ? lhs : [lhs]) as ParserNode
   }
 
   const prefix_binding_power = (token: LexerToken) => {

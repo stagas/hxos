@@ -1,15 +1,19 @@
-import { parse, ParserNode } from '../parse'
+import { parse, ParserNode, LexerToken } from '../parse'
 
 let total = 0
 
-function to_string(node: ParserNode): string {
+function to_string(node: ParserNode | LexerToken): string {
   total++
   if (total > 1500) {
     throw new Error('Tree too large')
   }
 
   if (Array.isArray(node)) {
-    return '(' + node.map(child => to_string(child)).join(' ') + ')'
+    if (node.length > 1) {
+      return '(' + node.map(child => to_string(child)).join(' ') + ')'
+    } else {
+      return to_string(node[0])
+    }
   }
 
   return node.value

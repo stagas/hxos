@@ -19,8 +19,6 @@ describe('calc', () => {
 
   it('accepts variables context', () => {
     expect(calc(parse('a*b+c*d'), { a: 3, b: 4, c: 5, d: 6 })).toEqual(42)
-    expect(() => calc(parse('a*b+c*d'), { a: 3, b: 4, d: 6 })).toThrow(
-      'missing variable'
-    )
+    expect(() => calc(parse('a*b+c*d'), { a: 3, b: 4, d: 6 })).toThrow('missing variable')
   })
 })

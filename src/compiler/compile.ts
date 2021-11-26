@@ -1,13 +1,8 @@
-import { ParserNode, panic } from '../parser'
+import { ParserNode, panic, LexerToken } from '../parser'
 import type { SExpr } from './sexpr'
 
 const generator = () => {
-  const ifelse = (
-    resultType: string,
-    condition: SExpr,
-    ifBody: SExpr,
-    elseBody?: SExpr
-  ) => {
+  const ifelse = (resultType: string, condition: SExpr, ifBody: SExpr, elseBody?: SExpr) => {
     return [
       'if',
       ['result', resultType],
@@ -30,16 +25,20 @@ const generator = () => {
   return { ifelse, f32 }
 }
 
-export const build = (node: ParserNode): SExpr => {
+export const build = (node: ParserNode | LexerToken): SExpr => {
   const { ifelse, f32 } = generator()
 
-  if (!Array.isArray(node))
-    switch (node.group) {
+  if (!Array.isArray(node)) node = [node]
+
+  if (node.length === 1) {
+    const token = node[0]
+    switch (token.group) {
       case 'num':
-        return ['f32.const', node.value]
+        return ['f32.const', token.value]
       default:
-        throw new SyntaxError(panic('bad node', node))
+        throw new SyntaxError(panic('bad node', token))
     }
+  }
 
   const [symbol, lhs, rhs, mhs] = node
 

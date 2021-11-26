@@ -155,8 +155,7 @@ export const Op = [
         table[Fix[fix]][op] ??= { Unary: null, Binary: null }
         table[Fix[fix]][op][Side[kind]] ??= [null, null]
         table[Fix[fix]][op][Side[kind]]![side === 'L' ? 0 : 1] = arity + 1
-        if (side === 'L')
-          table[Fix[fix]][op][Side[kind]]![1] ??= arity + 1 + rhs
+        if (side === 'L') table[Fix[fix]][op][Side[kind]]![1] ??= arity + 1 + rhs
       }
       return table
     },

@@ -17,8 +17,7 @@ const make = async (input: string) => {
     buffer = compile(source)
   } catch (e) {
     const error = e as Error
-    const index =
-      error.message?.split('position: ')?.[1]?.split(' ')?.[0] ?? source.length
+    const index = error.message?.split('position: ')?.[1]?.split(' ')?.[0] ?? source.length
     throw new SyntaxError(
       error.message +
         '\n' +
