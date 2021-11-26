@@ -63,7 +63,7 @@ export class Type {
   }
 
   convert(this: Type, x: AnalyserNode): AnalyserNode {
-    return { kind: Op['type']['convert'], type: this, node: [], children: [x] }
+    return { kind: Op['type']['convert'], type: this, node: [], caller: x.caller, children: [x] } // TODO: revisit this for correctness
   }
   equals(x: keyof typeof Type): boolean {
     return Type[x] === this

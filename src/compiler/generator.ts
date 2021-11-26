@@ -14,7 +14,7 @@ type GenMethods = { [K: string]: (node: AnalyserNode) => SExpr }
 const methods: GenMethods = {
   // module
   [Op.module.compile]: () => [],
-  [Op.module.noop]: () => [],
+  [Op.module.noop]: a => children(a),
 
   // fn
   [Op.fn.declaration]: ({ type, node: [, name, , args], children: c }) => {

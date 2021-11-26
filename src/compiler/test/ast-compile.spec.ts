@@ -58,6 +58,13 @@ describe('compile', () => {
     expect((await make('f:=a,b,c,d a*b+c*d')).f(3, 4, 5, 6)).toEqual(42)
   })
 
+  it('multiple functions declarations', async () => {
+    const mod = await make('a:=x x*2; b:=x x*4; c:=x,y x*y')
+    expect(mod.a(2)).toEqual(4)
+    expect(mod.b(2)).toEqual(8)
+    expect(mod.c(3, 4)).toEqual(12)
+  })
+
   // it.skip('handles very big expressions', async () => {
   //   await expect(
   //     make(

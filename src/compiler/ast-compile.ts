@@ -23,11 +23,15 @@ export const make = async (input: string, { metrics = false }: MakeOptions = {})
   const ast = analyse(tree, { type: Type.f32 })
   metrics && console.timeEnd('analyse')
   metrics && console.time('generate')
-  // debugger
   const wat = generate(ast)
   metrics && console.timeEnd('generate')
   metrics && console.time('compile')
-  const source = wat[0] === 'func' ? S(wat) : S(['func', ['export', '"main"'], ['result', 'f32'], wat])
+  const source = // a mess
+    wat.length > 0 && wat[0]?.[0] === 'func'
+      ? S(['module', ...wat])
+      : wat[0] === 'func'
+      ? S(['module', wat])
+      : S(['func', ['export', '"main"'], ['result', 'f32'], wat])
   const buffer = await compile(source)
   metrics && console.timeEnd('compile')
   metrics && console.timeEnd('make')
